@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package forge;
+
+option go_package = "github.com/Ritpra93/forge/internal/proto/forgepb";
+
+service ForgeScheduler {
+  rpc SubmitTask(TaskRequest) returns (TaskResponse);
+  rpc GetTaskStatus(TaskStatusRequest) returns (TaskStatusResponse);
+  rpc RegisterWorker(stream WorkerHeartbeat) returns (stream TaskAssignment);
+  rpc ReportTaskResult(TaskResult) returns (TaskResultAck);
+}
+
+message TaskRequest {
+  string type = 1;
+  bytes payload = 2;
+  int32 max_retries = 3;
+  int32 timeout_seconds = 4;
+}
+
+message TaskResponse {
+  string task_id = 1;
+  string status = 2;
+}
+
+message TaskStatusRequest {
+  string task_id = 1;
+}
+
+message TaskStatusResponse {
+  string task_id = 1;
+  string status = 2;
+  int32 retry_count = 3;
+  string assigned_worker = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}
+
+message WorkerHeartbeat {
+  string worker_id = 1;
+  repeated string capabilities = 2;
+  int32 available_slots = 3;
+}
+
+message TaskAssignment {
+  string task_id = 1;
+  string type = 2;
+  bytes payload = 3;
+  int32 timeout_seconds = 4;
+}
+
+message TaskResult {
+  string task_id = 1;
+  string worker_id = 2;
+  bool success = 3;
+  bytes result = 4;
+  string error_message = 5;
+}
+
+message TaskResultAck {
+  bool acknowledged = 1;
+}

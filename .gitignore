@@ -1,0 +1,50 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+ 
+# Go build artifacts
+*.o
+*.a
+*.test
+ 
+# Go coverage
+*.out
+coverage.html
+ 
+# Raft data directories (created at runtime)
+data/
+/tmp/
+ 
+# Docker volumes
+docker-data/
+ 
+# Generated protobuf files (optional — some teams commit these, some don't)
+# Uncomment the next two lines if you want to regenerate from proto source every time:
+# internal/proto/forgepb/*.pb.go
+# internal/proto/forgepb/*_grpc.pb.go
+ 
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+ 
+# Environment files
+.env
+.env.local
+ 
+# Grafana local data
+deploy/grafana/data/
+ 
+# Prometheus local data
+deploy/prometheus/data/
+
+#ignore .md files
+CLAUDE.MD
+forge-implementation-guide-v2-verified.md
