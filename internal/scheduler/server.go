@@ -20,6 +20,25 @@ import (
 
 const defaultApplyTimeout = 5 * time.Second
 
+// TrackerConfig holds configurable intervals for background goroutines.
+// Zero values fall back to production defaults.
+type TrackerConfig struct {
+	TrackerTick   time.Duration // dead worker check interval (default 3s)
+	HeartbeatDead time.Duration // time after which a worker is considered dead (default 9s)
+	RetryTick     time.Duration // retry scheduler check interval (default 1s)
+	AssignerTick  time.Duration // task assigner check interval (default 500ms)
+}
+
+// DefaultTrackerConfig returns production-default intervals.
+func DefaultTrackerConfig() TrackerConfig {
+	return TrackerConfig{
+		TrackerTick:   3 * time.Second,
+		HeartbeatDead: 9 * time.Second,
+		RetryTick:     1 * time.Second,
+		AssignerTick:  500 * time.Millisecond,
+	}
+}
+
 // workerInfo tracks the state of a connected worker.
 type workerInfo struct {
 	workerID       string
@@ -37,18 +56,27 @@ type ForgeSchedulerServer struct {
 	raft   *hcraft.Raft
 	fsm    *raftpkg.TaskFSM
 	logger *slog.Logger
+	config TrackerConfig
 
-	mu      sync.RWMutex
-	workers map[string]*workerInfo
+	mu          sync.RWMutex
+	workers     map[string]*workerInfo
+	leaderSince time.Time // when this node first observed itself as leader
 }
 
 // NewForgeSchedulerServer creates a new scheduler server backed by the given
 // Raft node and FSM.
 func NewForgeSchedulerServer(r *hcraft.Raft, fsm *raftpkg.TaskFSM, logger *slog.Logger) *ForgeSchedulerServer {
+	return NewForgeSchedulerServerWithConfig(r, fsm, logger, DefaultTrackerConfig())
+}
+
+// NewForgeSchedulerServerWithConfig creates a scheduler server with custom
+// tracker configuration. Useful for tests that need faster tick intervals.
+func NewForgeSchedulerServerWithConfig(r *hcraft.Raft, fsm *raftpkg.TaskFSM, logger *slog.Logger, config TrackerConfig) *ForgeSchedulerServer {
 	return &ForgeSchedulerServer{
 		raft:    r,
 		fsm:     fsm,
 		logger:  logger,
+		config:  config,
 		workers: make(map[string]*workerInfo),
 	}
 }

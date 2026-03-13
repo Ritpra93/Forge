@@ -130,7 +130,7 @@ func (f *TaskFSM) applyFailTask(cmd Command) error {
 	if task.RetryCount >= task.MaxRetries {
 		task.Status = "dead_letter"
 	} else {
-		task.Status = "pending"
+		task.Status = "retrying"
 	}
 	return nil
 }
@@ -203,6 +203,37 @@ func (f *TaskFSM) GetAllTasks() map[string]*Task {
 		tasks[k] = &copied
 	}
 	return tasks
+}
+
+// GetTasksByStatus returns copies of all tasks with the given status.
+func (f *TaskFSM) GetTasksByStatus(status string) []*Task {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	var result []*Task
+	for _, t := range f.tasks {
+		if t.Status == status {
+			copied := *t
+			result = append(result, &copied)
+		}
+	}
+	return result
+}
+
+// GetTasksByStatusAndWorker returns copies of all tasks matching both status
+// and assigned worker.
+func (f *TaskFSM) GetTasksByStatusAndWorker(status, workerID string) []*Task {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	var result []*Task
+	for _, t := range f.tasks {
+		if t.Status == status && t.AssignedWorker == workerID {
+			copied := *t
+			result = append(result, &copied)
+		}
+	}
+	return result
 }
 
 // taskSnapshot implements hcraft.FSMSnapshot.

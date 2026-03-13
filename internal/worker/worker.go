@@ -25,6 +25,7 @@ type Worker struct {
 	maxSlots      int32
 	activeSlots   atomic.Int32
 	logger        *slog.Logger
+	dialOpts      []grpc.DialOption // custom dial options (for testing with bufconn)
 
 	conn   *grpc.ClientConn
 	client forgepb.ForgeSchedulerClient
@@ -38,6 +39,19 @@ func NewWorker(id, schedulerAddr string, maxSlots int32, logger *slog.Logger, ta
 		handlers:      handlers.NewRegistry(taskHandlers...),
 		maxSlots:      maxSlots,
 		logger:        logger,
+	}
+}
+
+// NewWorkerWithDialOpts creates a worker with custom gRPC dial options.
+// This is used in tests to connect via bufconn instead of a real network address.
+func NewWorkerWithDialOpts(id string, maxSlots int32, logger *slog.Logger, dialOpts []grpc.DialOption, taskHandlers ...handlers.TaskHandler) *Worker {
+	return &Worker{
+		id:            id,
+		schedulerAddr: "passthrough:///bufnet",
+		handlers:      handlers.NewRegistry(taskHandlers...),
+		maxSlots:      maxSlots,
+		logger:        logger,
+		dialOpts:      dialOpts,
 	}
 }
 
@@ -63,17 +77,40 @@ func (w *Worker) availableSlots() int32 {
 // Run connects to the scheduler and processes task assignments until ctx is
 // cancelled. It blocks until the context is done or an unrecoverable error occurs.
 func (w *Worker) Run(ctx context.Context) error {
-	conn, err := grpc.NewClient(
-		w.schedulerAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	opts := w.dialOpts
+	if opts == nil {
+		opts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	}
+
+	conn, err := grpc.NewClient(w.schedulerAddr, opts...)
 	if err != nil {
 		return fmt.Errorf("connecting to scheduler: %w", err)
 	}
 	w.conn = conn
 	defer conn.Close()
 
-	w.client = forgepb.NewForgeSchedulerClient(conn)
+	return w.runStream(ctx)
+}
+
+// RunWithConn runs the worker using a pre-established connection. Used in tests.
+func (w *Worker) RunWithConn(ctx context.Context) error {
+	opts := w.dialOpts
+	if opts == nil {
+		opts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	}
+
+	conn, err := grpc.NewClient(w.schedulerAddr, opts...)
+	if err != nil {
+		return fmt.Errorf("connecting to scheduler: %w", err)
+	}
+	w.conn = conn
+	defer conn.Close()
+
+	return w.runStream(ctx)
+}
+
+func (w *Worker) runStream(ctx context.Context) error {
+	w.client = forgepb.NewForgeSchedulerClient(w.conn)
 
 	stream, err := w.client.RegisterWorker(ctx)
 	if err != nil {
