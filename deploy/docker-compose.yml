@@ -1,0 +1,122 @@
+services:
+  scheduler-1:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["scheduler"]
+    environment:
+      - NODE_ID=scheduler-1
+      - RAFT_BIND=scheduler-1:7000
+      - GRPC_ADDR=:50051
+      - METRICS_PORT=9090
+      - PEERS=scheduler-2:7000,scheduler-3:7000
+    ports:
+      - "50051:50051"
+      - "9090:9090"
+    networks:
+      - forge
+
+  scheduler-2:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["scheduler"]
+    environment:
+      - NODE_ID=scheduler-2
+      - RAFT_BIND=scheduler-2:7000
+      - GRPC_ADDR=:50051
+      - METRICS_PORT=9090
+      - PEERS=scheduler-1:7000,scheduler-3:7000
+    ports:
+      - "50052:50051"
+      - "9092:9090"
+    networks:
+      - forge
+
+  scheduler-3:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["scheduler"]
+    environment:
+      - NODE_ID=scheduler-3
+      - RAFT_BIND=scheduler-3:7000
+      - GRPC_ADDR=:50051
+      - METRICS_PORT=9090
+      - PEERS=scheduler-1:7000,scheduler-2:7000
+    ports:
+      - "50053:50051"
+      - "9093:9090"
+    networks:
+      - forge
+
+  worker-1:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["worker"]
+    environment:
+      - WORKER_ID=worker-1
+      - SCHEDULER_ADDR=scheduler-1:50051
+      - MAX_SLOTS=4
+      - METRICS_PORT=9091
+    ports:
+      - "9094:9091"
+    networks:
+      - forge
+    depends_on:
+      - scheduler-1
+
+  worker-2:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["worker"]
+    environment:
+      - WORKER_ID=worker-2
+      - SCHEDULER_ADDR=scheduler-1:50051
+      - MAX_SLOTS=4
+      - METRICS_PORT=9091
+    ports:
+      - "9095:9091"
+    networks:
+      - forge
+    depends_on:
+      - scheduler-1
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9099:9090"
+    networks:
+      - forge
+    depends_on:
+      - scheduler-1
+      - scheduler-2
+      - scheduler-3
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=forge
+    networks:
+      - forge
+    depends_on:
+      - prometheus
+
+networks:
+  forge:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

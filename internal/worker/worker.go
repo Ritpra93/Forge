@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/Ritpra93/forge/internal/metrics"
 	"github.com/Ritpra93/forge/internal/proto/forgepb"
 	"github.com/Ritpra93/forge/internal/worker/handlers"
 )
@@ -163,6 +164,7 @@ func (w *Worker) heartbeatLoop(ctx context.Context, stream grpc.BidiStreamingCli
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			metrics.WorkerAvailableSlots.Set(float64(w.availableSlots()))
 			if err := stream.Send(&forgepb.WorkerHeartbeat{
 				WorkerId:       w.id,
 				Capabilities:   w.capabilities(),
@@ -198,7 +200,11 @@ func (w *Worker) executeTask(ctx context.Context, assignment *forgepb.TaskAssign
 		defer cancel()
 	}
 
+	start := time.Now()
 	result, err := handler.Execute(taskCtx, assignment.GetPayload())
+	metrics.WorkerTaskExecution.Observe(time.Since(start).Seconds())
+	metrics.WorkerTasksExecuted.Inc()
+
 	if err != nil {
 		w.logger.Error("task execution failed",
 			"task_id", taskID,

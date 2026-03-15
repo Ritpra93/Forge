@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/Ritpra93/forge/internal/metrics"
 	"github.com/Ritpra93/forge/internal/proto/forgepb"
 	raftpkg "github.com/Ritpra93/forge/internal/raft"
 )
@@ -61,6 +62,7 @@ type ForgeSchedulerServer struct {
 	mu          sync.RWMutex
 	workers     map[string]*workerInfo
 	leaderSince time.Time // when this node first observed itself as leader
+	wasLeader   bool      // previous leader state for election detection (single-goroutine access)
 }
 
 // NewForgeSchedulerServer creates a new scheduler server backed by the given
@@ -153,6 +155,7 @@ func (s *ForgeSchedulerServer) SubmitTask(ctx context.Context, req *forgepb.Task
 		return nil, status.Errorf(codes.Internal, "creating task: %v", err)
 	}
 
+	metrics.TasksSubmitted.Inc()
 	s.logger.Info("task submitted", "task_id", taskID, "type", req.GetType())
 
 	return &forgepb.TaskResponse{
@@ -200,6 +203,7 @@ func (s *ForgeSchedulerServer) RegisterWorker(stream grpc.BidiStreamingServer[fo
 	}
 	s.mu.Unlock()
 
+	metrics.ActiveWorkers.Inc()
 	s.logger.Info("worker registered", "worker_id", workerID)
 
 	defer func() {
@@ -207,17 +211,20 @@ func (s *ForgeSchedulerServer) RegisterWorker(stream grpc.BidiStreamingServer[fo
 		delete(s.workers, workerID)
 		s.mu.Unlock()
 		close(assignCh)
+		metrics.ActiveWorkers.Dec()
 		s.logger.Info("worker disconnected", "worker_id", workerID)
 	}()
 
 	errCh := make(chan error, 1)
 	go func() {
 		for {
+			recvStart := time.Now()
 			hb, err := stream.Recv()
 			if err != nil {
 				errCh <- err
 				return
 			}
+			metrics.WorkerHeartbeatLatency.Observe(time.Since(recvStart).Seconds())
 			s.mu.Lock()
 			if w, ok := s.workers[workerID]; ok {
 				w.capabilities = hb.GetCapabilities()
@@ -263,6 +270,18 @@ func (s *ForgeSchedulerServer) ReportTaskResult(ctx context.Context, req *forgep
 
 	if err := s.applyCommand(cmd); err != nil {
 		return nil, status.Errorf(codes.Internal, "reporting result: %v", err)
+	}
+
+	if req.GetSuccess() {
+		metrics.TasksCompleted.Inc()
+		if task := s.fsm.GetTask(req.GetTaskId()); task != nil && task.CreatedAt > 0 {
+			metrics.TaskDuration.Observe(time.Since(time.Unix(0, task.CreatedAt)).Seconds())
+		}
+	} else {
+		metrics.TasksFailed.Inc()
+		if task := s.fsm.GetTask(req.GetTaskId()); task != nil && task.Status == "dead_letter" {
+			metrics.TasksDeadLettered.Inc()
+		}
 	}
 
 	s.logger.Info("task result reported",

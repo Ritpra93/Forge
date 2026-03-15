@@ -6,6 +6,7 @@ import (
 
 	hcraft "github.com/hashicorp/raft"
 
+	"github.com/Ritpra93/forge/internal/metrics"
 	raftpkg "github.com/Ritpra93/forge/internal/raft"
 )
 
@@ -28,7 +29,19 @@ func (s *ForgeSchedulerServer) StartWorkerTracker(ctx context.Context) {
 }
 
 func (s *ForgeSchedulerServer) trackWorkers() {
-	if s.raft.State() != hcraft.Leader {
+	isLeader := s.raft.State() == hcraft.Leader
+	if isLeader {
+		metrics.RaftIsLeader.Set(1)
+		metrics.RaftCommitIndex.Set(float64(s.raft.LastIndex()))
+	} else {
+		metrics.RaftIsLeader.Set(0)
+	}
+	if isLeader && !s.wasLeader {
+		metrics.RaftElectionTotal.Inc()
+	}
+	s.wasLeader = isLeader
+
+	if !isLeader {
 		s.mu.Lock()
 		s.leaderSince = time.Time{} // reset when not leader
 		s.mu.Unlock()

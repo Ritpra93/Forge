@@ -7,6 +7,7 @@ import (
 
 	hcraft "github.com/hashicorp/raft"
 
+	"github.com/Ritpra93/forge/internal/metrics"
 	"github.com/Ritpra93/forge/internal/proto/forgepb"
 	raftpkg "github.com/Ritpra93/forge/internal/raft"
 )
@@ -30,10 +31,12 @@ func (s *ForgeSchedulerServer) StartAssigner(ctx context.Context) {
 
 func (s *ForgeSchedulerServer) assignPendingTasks() {
 	if s.raft.State() != hcraft.Leader {
+		metrics.PendingQueueDepth.Set(0)
 		return
 	}
 
 	pending := s.fsm.GetTasksByStatus("pending")
+	metrics.PendingQueueDepth.Set(float64(len(pending)))
 	if len(pending) == 0 {
 		return
 	}
