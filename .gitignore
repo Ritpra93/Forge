@@ -51,3 +51,4 @@ deploy/prometheus/data/
 # Ignore guide/instruction files
 CLAUDE.md
 forge-implementation-guide-v2-verified.mdcoverage.out
+forge-implementation-guide-v2-verified.md
