@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	hcraft "github.com/hashicorp/raft"
@@ -38,6 +39,7 @@ func (s *ForgeSchedulerServer) trackWorkers() {
 	}
 	if isLeader && !s.wasLeader {
 		metrics.RaftElectionTotal.Inc()
+		s.AddEvent("leader_elected", "This node became the Raft leader")
 	}
 	s.wasLeader = isLeader
 
@@ -98,6 +100,7 @@ func (s *ForgeSchedulerServer) handleDeadWorker(workerID string) {
 	delete(s.workers, workerID)
 	s.mu.Unlock()
 
+	s.AddEvent("worker_dead", fmt.Sprintf("Worker %s declared dead, %d tasks reassigned", workerID, len(tasks)))
 	s.logger.Info("worker declared dead",
 		"worker_id", workerID,
 		"reassigned_tasks", len(tasks),

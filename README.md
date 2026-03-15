@@ -35,6 +35,8 @@ Existing task orchestration solutions like Temporal and Celery are heavyweight f
 
 **Real-time observability** — Grafana dashboards showing task throughput, worker health, Raft elections, and failure recovery. Watch the system heal itself in real time during chaos testing.
 
+**Live terminal dashboard** — A full-screen TUI built with Bubbletea that shows cluster status, task counters, worker health, and recent events in real time. No browser required — just run `forgectl dashboard`.
+
 ## Quick Start
 
 ```bash
@@ -57,6 +59,9 @@ open http://localhost:3000        # admin / admin
 
 # Check cluster health
 ./forgectl cluster
+
+# Launch live terminal dashboard
+./forgectl dashboard
 
 # Kill the leader and watch automatic failover
 docker kill forge-scheduler-1
@@ -125,6 +130,7 @@ Normal operation:          Leader dies:              Worker dies:
 | Metrics | Prometheus client_golang | Industry standard, 67%+ production adoption |
 | Dashboards | Grafana | Industry standard visualization, pairs with Prometheus |
 | CLI | cobra | Standard Go CLI library (kubectl, docker, hugo) |
+| Terminal UI | bubbletea + lipgloss | Elm-architecture TUI framework with styled rendering |
 | Deployment | Docker Compose | One-command local cluster, no cloud dependencies |
 | CI | GitHub Actions | Automated testing with race detection and linting |
 
@@ -155,6 +161,7 @@ forge/
 │   ├── raft/               # Raft FSM and node setup
 │   ├── scheduler/          # gRPC server, task assignment, worker tracking
 │   ├── worker/             # Task execution, heartbeat, handlers
+│   ├── dashboard/          # Live terminal dashboard (Bubbletea TUI)
 │   ├── proto/forgepb/      # Protobuf schema and generated code
 │   └── metrics/            # Prometheus metric definitions
 ├── test/
@@ -257,6 +264,26 @@ Access Grafana at `http://localhost:3000` (admin/admin) after running `make up`.
 **Worker Health** — Per-worker status table, task utilization bars, heartbeat latency tracking, failure event annotations.
 
 **Chaos Demo** — Combined single-screen view of leader status, task throughput, and worker count — designed for live demonstrations of failure recovery.
+
+### Live Terminal Dashboard
+
+For a quick overview without opening a browser, use the built-in terminal dashboard:
+
+```bash
+# Launch with default settings (refresh every 2s)
+./forgectl dashboard
+
+# Custom refresh rate and scheduler address
+./forgectl dashboard --address scheduler-1:50051 --refresh 1000
+```
+
+The dashboard shows four sections:
+- **Cluster Status** — Leader indicator, node list with colored health dots
+- **Task Counts** — Color-coded counters for each task state (pending, running, completed, failed, retrying, dead letter)
+- **Worker Table** — Worker ID, health status, slot utilization bar, last heartbeat time
+- **Recent Events** — Timestamped log of task submissions, completions, failures, worker connections, and leader elections
+
+Keyboard controls: `q` quit, `r` force refresh, `tab` cycle focus between sections.
 
 ### Prometheus Metrics
 

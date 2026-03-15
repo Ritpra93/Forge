@@ -26,6 +26,7 @@ const (
 	ForgeScheduler_WatchTask_FullMethodName        = "/forge.ForgeScheduler/WatchTask"
 	ForgeScheduler_GetClusterInfo_FullMethodName   = "/forge.ForgeScheduler/GetClusterInfo"
 	ForgeScheduler_ListTasks_FullMethodName        = "/forge.ForgeScheduler/ListTasks"
+	ForgeScheduler_GetDashboardData_FullMethodName = "/forge.ForgeScheduler/GetDashboardData"
 )
 
 // ForgeSchedulerClient is the client API for ForgeScheduler service.
@@ -39,6 +40,7 @@ type ForgeSchedulerClient interface {
 	WatchTask(ctx context.Context, in *WatchTaskRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TaskStatusResponse], error)
 	GetClusterInfo(ctx context.Context, in *ClusterInfoRequest, opts ...grpc.CallOption) (*ClusterInfoResponse, error)
 	ListTasks(ctx context.Context, in *ListTasksRequest, opts ...grpc.CallOption) (*ListTasksResponse, error)
+	GetDashboardData(ctx context.Context, in *DashboardDataRequest, opts ...grpc.CallOption) (*DashboardDataResponse, error)
 }
 
 type forgeSchedulerClient struct {
@@ -131,6 +133,16 @@ func (c *forgeSchedulerClient) ListTasks(ctx context.Context, in *ListTasksReque
 	return out, nil
 }
 
+func (c *forgeSchedulerClient) GetDashboardData(ctx context.Context, in *DashboardDataRequest, opts ...grpc.CallOption) (*DashboardDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DashboardDataResponse)
+	err := c.cc.Invoke(ctx, ForgeScheduler_GetDashboardData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ForgeSchedulerServer is the server API for ForgeScheduler service.
 // All implementations must embed UnimplementedForgeSchedulerServer
 // for forward compatibility.
@@ -142,6 +154,7 @@ type ForgeSchedulerServer interface {
 	WatchTask(*WatchTaskRequest, grpc.ServerStreamingServer[TaskStatusResponse]) error
 	GetClusterInfo(context.Context, *ClusterInfoRequest) (*ClusterInfoResponse, error)
 	ListTasks(context.Context, *ListTasksRequest) (*ListTasksResponse, error)
+	GetDashboardData(context.Context, *DashboardDataRequest) (*DashboardDataResponse, error)
 	mustEmbedUnimplementedForgeSchedulerServer()
 }
 
@@ -172,6 +185,9 @@ func (UnimplementedForgeSchedulerServer) GetClusterInfo(context.Context, *Cluste
 }
 func (UnimplementedForgeSchedulerServer) ListTasks(context.Context, *ListTasksRequest) (*ListTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTasks not implemented")
+}
+func (UnimplementedForgeSchedulerServer) GetDashboardData(context.Context, *DashboardDataRequest) (*DashboardDataResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDashboardData not implemented")
 }
 func (UnimplementedForgeSchedulerServer) mustEmbedUnimplementedForgeSchedulerServer() {}
 func (UnimplementedForgeSchedulerServer) testEmbeddedByValue()                        {}
@@ -302,6 +318,24 @@ func _ForgeScheduler_ListTasks_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ForgeScheduler_GetDashboardData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DashboardDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ForgeSchedulerServer).GetDashboardData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ForgeScheduler_GetDashboardData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ForgeSchedulerServer).GetDashboardData(ctx, req.(*DashboardDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ForgeScheduler_ServiceDesc is the grpc.ServiceDesc for ForgeScheduler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -328,6 +362,10 @@ var ForgeScheduler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTasks",
 			Handler:    _ForgeScheduler_ListTasks_Handler,
+		},
+		{
+			MethodName: "GetDashboardData",
+			Handler:    _ForgeScheduler_GetDashboardData_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

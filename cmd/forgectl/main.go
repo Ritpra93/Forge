@@ -27,6 +27,7 @@ func main() {
 		newWatchCmd(),
 		newClusterCmd(),
 		newDeadletterCmd(),
+		newDashboardCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

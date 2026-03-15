@@ -20,6 +20,7 @@ import (
 )
 
 const defaultApplyTimeout = 5 * time.Second
+const maxEvents = 50
 
 // TrackerConfig holds configurable intervals for background goroutines.
 // Zero values fall back to production defaults.
@@ -63,6 +64,9 @@ type ForgeSchedulerServer struct {
 	workers     map[string]*workerInfo
 	leaderSince time.Time // when this node first observed itself as leader
 	wasLeader   bool      // previous leader state for election detection (single-goroutine access)
+
+	events   []*forgepb.ClusterEvent // ring buffer for recent cluster events
+	eventIdx int                     // write cursor into events ring buffer
 }
 
 // NewForgeSchedulerServer creates a new scheduler server backed by the given
@@ -81,6 +85,52 @@ func NewForgeSchedulerServerWithConfig(r *hcraft.Raft, fsm *raftpkg.TaskFSM, log
 		config:  config,
 		workers: make(map[string]*workerInfo),
 	}
+}
+
+// AddEvent records a cluster event in the ring buffer.
+func (s *ForgeSchedulerServer) AddEvent(eventType, message string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	ev := &forgepb.ClusterEvent{
+		Timestamp: time.Now().UnixNano(),
+		Type:      eventType,
+		Message:   message,
+	}
+	if len(s.events) < maxEvents {
+		s.events = append(s.events, ev)
+	} else {
+		s.events[s.eventIdx%maxEvents] = ev
+	}
+	s.eventIdx++
+}
+
+// getRecentEvents returns the last n events in chronological order.
+func (s *ForgeSchedulerServer) getRecentEvents(n int) []*forgepb.ClusterEvent {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	total := len(s.events)
+	if total == 0 {
+		return nil
+	}
+	if n > total {
+		n = total
+	}
+
+	result := make([]*forgepb.ClusterEvent, n)
+	if total < maxEvents {
+		// buffer hasn't wrapped yet
+		copy(result, s.events[total-n:])
+	} else {
+		// buffer has wrapped — read from oldest to newest
+		start := s.eventIdx % maxEvents
+		for i := 0; i < n; i++ {
+			idx := (start + total - n + i) % maxEvents
+			result[i] = s.events[idx]
+		}
+	}
+	return result
 }
 
 // newTaskID generates a UUID v4 task identifier.
@@ -156,6 +206,7 @@ func (s *ForgeSchedulerServer) SubmitTask(ctx context.Context, req *forgepb.Task
 	}
 
 	metrics.TasksSubmitted.Inc()
+	s.AddEvent("task_submitted", fmt.Sprintf("Task %s submitted (type: %s)", taskID, req.GetType()))
 	s.logger.Info("task submitted", "task_id", taskID, "type", req.GetType())
 
 	return &forgepb.TaskResponse{
@@ -204,6 +255,7 @@ func (s *ForgeSchedulerServer) RegisterWorker(stream grpc.BidiStreamingServer[fo
 	s.mu.Unlock()
 
 	metrics.ActiveWorkers.Inc()
+	s.AddEvent("worker_connected", fmt.Sprintf("Worker %s connected", workerID))
 	s.logger.Info("worker registered", "worker_id", workerID)
 
 	defer func() {
@@ -212,6 +264,7 @@ func (s *ForgeSchedulerServer) RegisterWorker(stream grpc.BidiStreamingServer[fo
 		s.mu.Unlock()
 		close(assignCh)
 		metrics.ActiveWorkers.Dec()
+		s.AddEvent("worker_disconnected", fmt.Sprintf("Worker %s disconnected", workerID))
 		s.logger.Info("worker disconnected", "worker_id", workerID)
 	}()
 
@@ -274,13 +327,16 @@ func (s *ForgeSchedulerServer) ReportTaskResult(ctx context.Context, req *forgep
 
 	if req.GetSuccess() {
 		metrics.TasksCompleted.Inc()
+		s.AddEvent("task_completed", fmt.Sprintf("Task %s completed by %s", req.GetTaskId(), req.GetWorkerId()))
 		if task := s.fsm.GetTask(req.GetTaskId()); task != nil && task.CreatedAt > 0 {
 			metrics.TaskDuration.Observe(time.Since(time.Unix(0, task.CreatedAt)).Seconds())
 		}
 	} else {
 		metrics.TasksFailed.Inc()
+		s.AddEvent("task_failed", fmt.Sprintf("Task %s failed on %s: %s", req.GetTaskId(), req.GetWorkerId(), req.GetErrorMessage()))
 		if task := s.fsm.GetTask(req.GetTaskId()); task != nil && task.Status == "dead_letter" {
 			metrics.TasksDeadLettered.Inc()
+			s.AddEvent("task_dead_lettered", fmt.Sprintf("Task %s moved to dead letter", req.GetTaskId()))
 		}
 	}
 
@@ -430,4 +486,57 @@ func (s *ForgeSchedulerServer) ListTasks(_ context.Context, req *forgepb.ListTas
 	}
 
 	return resp, nil
+}
+
+// GetDashboardData aggregates cluster, task, worker, and event data for the
+// live terminal dashboard. Any node can serve this request.
+func (s *ForgeSchedulerServer) GetDashboardData(ctx context.Context, _ *forgepb.DashboardDataRequest) (*forgepb.DashboardDataResponse, error) {
+	cluster, err := s.GetClusterInfo(ctx, &forgepb.ClusterInfoRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	allTasks := s.fsm.GetAllTasks()
+	counts := &forgepb.TaskCounts{}
+	for _, t := range allTasks {
+		switch t.Status {
+		case "pending":
+			counts.Pending++
+		case "running":
+			counts.Running++
+		case "completed":
+			counts.Completed++
+		case "failed":
+			counts.Failed++
+		case "dead_letter":
+			counts.DeadLetter++
+		case "retrying":
+			counts.Retrying++
+		}
+	}
+
+	workers := s.GetConnectedWorkers()
+	workerStatuses := make([]*forgepb.WorkerStatus, 0, len(workers))
+	for _, w := range workers {
+		ws := "healthy"
+		if time.Since(w.lastHeartbeat) > s.config.HeartbeatDead {
+			ws = "dead"
+		}
+		workerStatuses = append(workerStatuses, &forgepb.WorkerStatus{
+			WorkerId:       w.workerID,
+			Capabilities:   w.capabilities,
+			AvailableSlots: w.availableSlots,
+			LastHeartbeat:  w.lastHeartbeat.UnixNano(),
+			Status:         ws,
+		})
+	}
+
+	events := s.getRecentEvents(20)
+
+	return &forgepb.DashboardDataResponse{
+		Cluster:      cluster,
+		TaskCounts:   counts,
+		Workers:      workerStatuses,
+		RecentEvents: events,
+	}, nil
 }
