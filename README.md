@@ -2,28 +2,23 @@
 
 A fault-tolerant distributed task orchestrator built in Go with Raft consensus, gRPC communication, and real-time observability.
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Forge Cluster                             │
-│                                                                  │
-│  ┌─────────────┐   Raft    ┌─────────────┐   Raft    ┌────────────────┐
-│  │ Scheduler 1 │◄────────►│ Scheduler 2 │◄────────►│ Scheduler 3    │
-│  │  (Leader)    │           │ (Follower)  │           │  (Follower)    │
-│  └──────┬──────┘           └─────────────┘           └────────────────┘
-│         │                                                        │
-│         │ gRPC (task assignment + heartbeats)                     │
-│         │                                                        │
-│  ┌──────┴──────┬───────────────┬───────────────┐                 │
-│  │             │               │               │                 │
-│  ▼             ▼               ▼               ▼                 │
-│ ┌──────┐   ┌──────┐       ┌──────┐       ┌──────┐               │
-│ │Wrkr 1│   │Wrkr 2│       │Wrkr 3│       │Wrkr N│               │
-│ └──────┘   └──────┘       └──────┘       └──────┘               │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐     │
-│  │              Prometheus  →  Grafana Dashboards           │     │
-│  └─────────────────────────────────────────────────────────┘     │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    Client["forgectl (CLI)"] -->|gRPC| S1
+
+    subgraph Scheduler Cluster
+        S1["Scheduler 1<br/>(Leader)"] <-->|Raft| S2["Scheduler 2<br/>(Follower)"]
+        S2 <-->|Raft| S3["Scheduler 3<br/>(Follower)"]
+        S1 <-->|Raft| S3
+    end
+
+    S1 -->|"gRPC Stream<br/>(tasks + heartbeats)"| W1[Worker 1]
+    S1 -->|gRPC Stream| W2[Worker 2]
+    S1 -->|gRPC Stream| WN[Worker N]
+
+    S1 & S2 & S3 -->|/metrics| Prometheus
+    W1 & W2 & WN -->|/metrics| Prometheus
+    Prometheus --> Grafana
 ```
 
 ## Why Forge?
