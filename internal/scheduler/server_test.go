@@ -36,7 +36,11 @@ func setupTestServer(t *testing.T) (forgepb.ForgeSchedulerClient, *ForgeSchedule
 
 	grpcServer := grpc.NewServer()
 	forgepb.RegisterForgeSchedulerServer(grpcServer, srv)
-	go grpcServer.Serve(lis)
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			t.Logf("grpc server error: %v", err)
+		}
+	}()
 	t.Cleanup(func() { grpcServer.Stop() })
 
 	client := dialBufconn(t, lis)
@@ -73,7 +77,11 @@ func setupFollowerServer(t *testing.T) forgepb.ForgeSchedulerClient {
 
 	grpcServer := grpc.NewServer()
 	forgepb.RegisterForgeSchedulerServer(grpcServer, srv)
-	go grpcServer.Serve(lis)
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			t.Logf("grpc server error: %v", err)
+		}
+	}()
 	t.Cleanup(func() { grpcServer.Stop() })
 
 	return dialBufconn(t, lis)

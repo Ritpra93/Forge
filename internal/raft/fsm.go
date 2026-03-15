@@ -245,12 +245,12 @@ type taskSnapshot struct {
 func (s *taskSnapshot) Persist(sink hcraft.SnapshotSink) error {
 	data, err := json.Marshal(s.tasks)
 	if err != nil {
-		sink.Cancel()
+		_ = sink.Cancel()
 		return fmt.Errorf("marshaling snapshot: %w", err)
 	}
 
 	if _, err := sink.Write(data); err != nil {
-		sink.Cancel()
+		_ = sink.Cancel()
 		return fmt.Errorf("writing snapshot: %w", err)
 	}
 
