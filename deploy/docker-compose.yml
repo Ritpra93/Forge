@@ -3,13 +3,14 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    command: ["scheduler"]
+    command: ["/usr/local/bin/scheduler"]
     environment:
       - NODE_ID=scheduler-1
       - RAFT_BIND=scheduler-1:7000
       - GRPC_ADDR=:50051
       - METRICS_PORT=9090
       - PEERS=scheduler-2:7000,scheduler-3:7000
+      - BOOTSTRAP=true
     ports:
       - "50051:50051"
       - "9090:9090"
@@ -20,7 +21,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    command: ["scheduler"]
+    command: ["/usr/local/bin/scheduler"]
     environment:
       - NODE_ID=scheduler-2
       - RAFT_BIND=scheduler-2:7000
@@ -37,7 +38,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    command: ["scheduler"]
+    command: ["/usr/local/bin/scheduler"]
     environment:
       - NODE_ID=scheduler-3
       - RAFT_BIND=scheduler-3:7000
@@ -54,7 +55,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    command: ["worker"]
+    command: ["/usr/local/bin/worker"]
     environment:
       - WORKER_ID=worker-1
       - SCHEDULER_ADDR=scheduler-1:50051
@@ -71,7 +72,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    command: ["worker"]
+    command: ["/usr/local/bin/worker"]
     environment:
       - WORKER_ID=worker-2
       - SCHEDULER_ADDR=scheduler-1:50051
