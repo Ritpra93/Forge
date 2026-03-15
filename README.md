@@ -94,9 +94,9 @@ Client                  Scheduler (Leader)              Worker
 ```
 Normal operation:          Leader dies:              Worker dies:
 
-  S1(L) ←→ S2 ←→ S3        S1(💀)    S2 ←→ S3       S1(L) ←→ S2 ←→ S3
+  S1(L) ←→ S2 ←→ S3        S1(dies)    S2 ←→ S3       S1(L) ←→ S2 ←→ S3
    │                                   │                │
-   ├── W1  W2  W3           S2 elected leader          W1  W2(💀) W3
+   ├── W1  W2  W3           S2 elected leader          W1  W2(dies) W3
    │                         │                          │
    │                         ├── W1  W2  W3            Detects missed heartbeats
    │                         │                          │
