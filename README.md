@@ -287,7 +287,7 @@ Keyboard controls: `q` quit, `r` force refresh, `tab` cycle focus between sectio
 
 ### Prometheus Metrics
 
-All metrics are exposed at `/metrics` on each scheduler and worker node and use the `forge_` prefix. See [CLAUDE.md](CLAUDE.md) for the complete metrics inventory.
+All metrics are exposed at `/metrics` on each scheduler and worker node and use the `forge_` prefix.
 
 ## Contributing
 
