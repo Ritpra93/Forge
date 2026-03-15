@@ -23,6 +23,9 @@ const (
 	ForgeScheduler_GetTaskStatus_FullMethodName    = "/forge.ForgeScheduler/GetTaskStatus"
 	ForgeScheduler_RegisterWorker_FullMethodName   = "/forge.ForgeScheduler/RegisterWorker"
 	ForgeScheduler_ReportTaskResult_FullMethodName = "/forge.ForgeScheduler/ReportTaskResult"
+	ForgeScheduler_WatchTask_FullMethodName        = "/forge.ForgeScheduler/WatchTask"
+	ForgeScheduler_GetClusterInfo_FullMethodName   = "/forge.ForgeScheduler/GetClusterInfo"
+	ForgeScheduler_ListTasks_FullMethodName        = "/forge.ForgeScheduler/ListTasks"
 )
 
 // ForgeSchedulerClient is the client API for ForgeScheduler service.
@@ -33,6 +36,9 @@ type ForgeSchedulerClient interface {
 	GetTaskStatus(ctx context.Context, in *TaskStatusRequest, opts ...grpc.CallOption) (*TaskStatusResponse, error)
 	RegisterWorker(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[WorkerHeartbeat, TaskAssignment], error)
 	ReportTaskResult(ctx context.Context, in *TaskResult, opts ...grpc.CallOption) (*TaskResultAck, error)
+	WatchTask(ctx context.Context, in *WatchTaskRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TaskStatusResponse], error)
+	GetClusterInfo(ctx context.Context, in *ClusterInfoRequest, opts ...grpc.CallOption) (*ClusterInfoResponse, error)
+	ListTasks(ctx context.Context, in *ListTasksRequest, opts ...grpc.CallOption) (*ListTasksResponse, error)
 }
 
 type forgeSchedulerClient struct {
@@ -86,6 +92,45 @@ func (c *forgeSchedulerClient) ReportTaskResult(ctx context.Context, in *TaskRes
 	return out, nil
 }
 
+func (c *forgeSchedulerClient) WatchTask(ctx context.Context, in *WatchTaskRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TaskStatusResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ForgeScheduler_ServiceDesc.Streams[1], ForgeScheduler_WatchTask_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[WatchTaskRequest, TaskStatusResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ForgeScheduler_WatchTaskClient = grpc.ServerStreamingClient[TaskStatusResponse]
+
+func (c *forgeSchedulerClient) GetClusterInfo(ctx context.Context, in *ClusterInfoRequest, opts ...grpc.CallOption) (*ClusterInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClusterInfoResponse)
+	err := c.cc.Invoke(ctx, ForgeScheduler_GetClusterInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *forgeSchedulerClient) ListTasks(ctx context.Context, in *ListTasksRequest, opts ...grpc.CallOption) (*ListTasksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTasksResponse)
+	err := c.cc.Invoke(ctx, ForgeScheduler_ListTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ForgeSchedulerServer is the server API for ForgeScheduler service.
 // All implementations must embed UnimplementedForgeSchedulerServer
 // for forward compatibility.
@@ -94,6 +139,9 @@ type ForgeSchedulerServer interface {
 	GetTaskStatus(context.Context, *TaskStatusRequest) (*TaskStatusResponse, error)
 	RegisterWorker(grpc.BidiStreamingServer[WorkerHeartbeat, TaskAssignment]) error
 	ReportTaskResult(context.Context, *TaskResult) (*TaskResultAck, error)
+	WatchTask(*WatchTaskRequest, grpc.ServerStreamingServer[TaskStatusResponse]) error
+	GetClusterInfo(context.Context, *ClusterInfoRequest) (*ClusterInfoResponse, error)
+	ListTasks(context.Context, *ListTasksRequest) (*ListTasksResponse, error)
 	mustEmbedUnimplementedForgeSchedulerServer()
 }
 
@@ -115,6 +163,15 @@ func (UnimplementedForgeSchedulerServer) RegisterWorker(grpc.BidiStreamingServer
 }
 func (UnimplementedForgeSchedulerServer) ReportTaskResult(context.Context, *TaskResult) (*TaskResultAck, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReportTaskResult not implemented")
+}
+func (UnimplementedForgeSchedulerServer) WatchTask(*WatchTaskRequest, grpc.ServerStreamingServer[TaskStatusResponse]) error {
+	return status.Error(codes.Unimplemented, "method WatchTask not implemented")
+}
+func (UnimplementedForgeSchedulerServer) GetClusterInfo(context.Context, *ClusterInfoRequest) (*ClusterInfoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetClusterInfo not implemented")
+}
+func (UnimplementedForgeSchedulerServer) ListTasks(context.Context, *ListTasksRequest) (*ListTasksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTasks not implemented")
 }
 func (UnimplementedForgeSchedulerServer) mustEmbedUnimplementedForgeSchedulerServer() {}
 func (UnimplementedForgeSchedulerServer) testEmbeddedByValue()                        {}
@@ -198,6 +255,53 @@ func _ForgeScheduler_ReportTaskResult_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ForgeScheduler_WatchTask_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchTaskRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ForgeSchedulerServer).WatchTask(m, &grpc.GenericServerStream[WatchTaskRequest, TaskStatusResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ForgeScheduler_WatchTaskServer = grpc.ServerStreamingServer[TaskStatusResponse]
+
+func _ForgeScheduler_GetClusterInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClusterInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ForgeSchedulerServer).GetClusterInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ForgeScheduler_GetClusterInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ForgeSchedulerServer).GetClusterInfo(ctx, req.(*ClusterInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ForgeScheduler_ListTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTasksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ForgeSchedulerServer).ListTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ForgeScheduler_ListTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ForgeSchedulerServer).ListTasks(ctx, req.(*ListTasksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ForgeScheduler_ServiceDesc is the grpc.ServiceDesc for ForgeScheduler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -217,6 +321,14 @@ var ForgeScheduler_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ReportTaskResult",
 			Handler:    _ForgeScheduler_ReportTaskResult_Handler,
 		},
+		{
+			MethodName: "GetClusterInfo",
+			Handler:    _ForgeScheduler_GetClusterInfo_Handler,
+		},
+		{
+			MethodName: "ListTasks",
+			Handler:    _ForgeScheduler_ListTasks_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -224,6 +336,11 @@ var ForgeScheduler_ServiceDesc = grpc.ServiceDesc{
 			Handler:       _ForgeScheduler_RegisterWorker_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "WatchTask",
+			Handler:       _ForgeScheduler_WatchTask_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "internal/proto/forgepb/forge.proto",

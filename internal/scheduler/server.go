@@ -303,3 +303,112 @@ func (s *ForgeSchedulerServer) GetConnectedWorkers() []workerInfo {
 	}
 	return result
 }
+
+// WatchTask streams task status updates until the task reaches a terminal state.
+func (s *ForgeSchedulerServer) WatchTask(req *forgepb.WatchTaskRequest, stream grpc.ServerStreamingServer[forgepb.TaskStatusResponse]) error {
+	taskID := req.GetTaskId()
+	interval := time.Duration(req.GetPollIntervalMs()) * time.Millisecond
+	if interval <= 0 {
+		interval = 1 * time.Second
+	}
+
+	var lastStatus string
+	for {
+		task := s.fsm.GetTask(taskID)
+		if task == nil {
+			return status.Errorf(codes.NotFound, "task %s not found", taskID)
+		}
+
+		if task.Status != lastStatus {
+			lastStatus = task.Status
+			if err := stream.Send(&forgepb.TaskStatusResponse{
+				TaskId:         task.ID,
+				Status:         task.Status,
+				RetryCount:     int32(task.RetryCount),
+				AssignedWorker: task.AssignedWorker,
+				CreatedAt:      task.CreatedAt,
+				UpdatedAt:      task.UpdatedAt,
+			}); err != nil {
+				return err
+			}
+
+			if isTerminal(task.Status) {
+				return nil
+			}
+		}
+
+		select {
+		case <-stream.Context().Done():
+			return stream.Context().Err()
+		case <-time.After(interval):
+		}
+	}
+}
+
+// isTerminal returns true for task states that will not change further.
+func isTerminal(s string) bool {
+	return s == "completed" || s == "dead_letter"
+}
+
+// GetClusterInfo returns the current Raft cluster state.
+func (s *ForgeSchedulerServer) GetClusterInfo(_ context.Context, _ *forgepb.ClusterInfoRequest) (*forgepb.ClusterInfoResponse, error) {
+	leaderAddr, leaderID := s.raft.LeaderWithID()
+
+	configFuture := s.raft.GetConfiguration()
+	if err := configFuture.Error(); err != nil {
+		return nil, status.Errorf(codes.Internal, "getting cluster configuration: %v", err)
+	}
+
+	var nodes []*forgepb.NodeInfo
+	for _, server := range configFuture.Configuration().Servers {
+		nodes = append(nodes, &forgepb.NodeInfo{
+			Id:      string(server.ID),
+			Address: string(server.Address),
+			State:   s.nodeState(server.ID),
+		})
+	}
+
+	return &forgepb.ClusterInfoResponse{
+		LeaderAddress: string(leaderAddr),
+		LeaderId:      string(leaderID),
+		Nodes:         nodes,
+	}, nil
+}
+
+// nodeState returns a human-readable state for a node in the cluster.
+func (s *ForgeSchedulerServer) nodeState(id hcraft.ServerID) string {
+	_, leaderID := s.raft.LeaderWithID()
+	if id == leaderID {
+		return "leader"
+	}
+	return "follower"
+}
+
+// ListTasks returns tasks, optionally filtered by status.
+func (s *ForgeSchedulerServer) ListTasks(_ context.Context, req *forgepb.ListTasksRequest) (*forgepb.ListTasksResponse, error) {
+	var tasks []*raftpkg.Task
+
+	if filter := req.GetStatusFilter(); filter != "" {
+		tasks = s.fsm.GetTasksByStatus(filter)
+	} else {
+		allTasks := s.fsm.GetAllTasks()
+		tasks = make([]*raftpkg.Task, 0, len(allTasks))
+		for _, t := range allTasks {
+			tasks = append(tasks, t)
+		}
+	}
+
+	resp := &forgepb.ListTasksResponse{}
+	for _, t := range tasks {
+		resp.Tasks = append(resp.Tasks, &forgepb.TaskStatusResponse{
+			TaskId:         t.ID,
+			Status:         t.Status,
+			RetryCount:     int32(t.RetryCount),
+			AssignedWorker: t.AssignedWorker,
+			CreatedAt:      t.CreatedAt,
+			UpdatedAt:      t.UpdatedAt,
+		})
+	}
+
+	return resp, nil
+}

@@ -9,6 +9,9 @@ service ForgeScheduler {
   rpc GetTaskStatus(TaskStatusRequest) returns (TaskStatusResponse);
   rpc RegisterWorker(stream WorkerHeartbeat) returns (stream TaskAssignment);
   rpc ReportTaskResult(TaskResult) returns (TaskResultAck);
+  rpc WatchTask(WatchTaskRequest) returns (stream TaskStatusResponse);
+  rpc GetClusterInfo(ClusterInfoRequest) returns (ClusterInfoResponse);
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
 }
 
 message TaskRequest {
@@ -59,4 +62,31 @@ message TaskResult {
 
 message TaskResultAck {
   bool acknowledged = 1;
+}
+
+message WatchTaskRequest {
+  string task_id = 1;
+  int32 poll_interval_ms = 2;
+}
+
+message ClusterInfoRequest {}
+
+message ClusterInfoResponse {
+  string leader_address = 1;
+  string leader_id = 2;
+  repeated NodeInfo nodes = 3;
+}
+
+message NodeInfo {
+  string id = 1;
+  string address = 2;
+  string state = 3;
+}
+
+message ListTasksRequest {
+  string status_filter = 1;
+}
+
+message ListTasksResponse {
+  repeated TaskStatusResponse tasks = 1;
 }
