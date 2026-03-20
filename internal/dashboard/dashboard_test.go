@@ -34,7 +34,7 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestViewNotReady(t *testing.T) {
-	m := New(&mockClient{}, time.Second)
+	m := NewOverview(&mockClient{}, time.Second)
 	view := m.View()
 	if view != "Loading..." {
 		t.Errorf("got %q, want %q", view, "Loading...")
@@ -42,7 +42,7 @@ func TestViewNotReady(t *testing.T) {
 }
 
 func TestViewWithError(t *testing.T) {
-	m := New(&mockClient{}, time.Second)
+	m := NewOverview(&mockClient{}, time.Second)
 	m.ready = true
 	m.err = errors.New("connection refused")
 
@@ -56,7 +56,7 @@ func TestViewWithError(t *testing.T) {
 }
 
 func TestViewWithData(t *testing.T) {
-	m := New(&mockClient{}, time.Second)
+	m := NewOverview(&mockClient{}, time.Second)
 	m.ready = true
 	m.width = 120
 	m.height = 40
@@ -120,13 +120,13 @@ func TestUpdateCtrlC(t *testing.T) {
 }
 
 func TestUpdateTabKey(t *testing.T) {
-	m := New(&mockClient{}, time.Second)
+	m := NewOverview(&mockClient{}, time.Second)
 	if m.focusedPanel != 0 {
 		t.Fatalf("initial focusedPanel should be 0, got %d", m.focusedPanel)
 	}
 
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	um := updated.(Model)
+	um := updated.(OverviewModel)
 	if um.focusedPanel != 1 {
 		t.Errorf("expected focusedPanel 1 after first tab, got %d", um.focusedPanel)
 	}
@@ -134,7 +134,7 @@ func TestUpdateTabKey(t *testing.T) {
 	// Wrap around
 	um.focusedPanel = numPanels - 1
 	updated2, _ := um.Update(tea.KeyMsg{Type: tea.KeyTab})
-	um2 := updated2.(Model)
+	um2 := updated2.(OverviewModel)
 	if um2.focusedPanel != 0 {
 		t.Errorf("expected focusedPanel 0 after wrap, got %d", um2.focusedPanel)
 	}
@@ -142,20 +142,23 @@ func TestUpdateTabKey(t *testing.T) {
 
 func TestUpdateWindowSizeMsg(t *testing.T) {
 	m := New(&mockClient{}, time.Second)
-	if m.ready {
-		t.Error("expected ready=false initially")
-	}
 
 	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
-	um := updated.(Model)
-	if !um.ready {
-		t.Error("expected ready=true after WindowSizeMsg")
-	}
+	um := updated.(RootModel)
 	if um.width != 120 {
 		t.Errorf("expected width=120, got %d", um.width)
 	}
 	if um.height != 40 {
 		t.Errorf("expected height=40, got %d", um.height)
+	}
+
+	// All tabs must have received the size — overview tab should now be ready.
+	overview, ok := um.tabs[0].(OverviewModel)
+	if !ok {
+		t.Fatal("tabs[0] is not OverviewModel")
+	}
+	if !overview.ready {
+		t.Error("expected overview tab ready=true after WindowSizeMsg propagation")
 	}
 }
 
@@ -164,11 +167,11 @@ func TestFetchConnectionError(t *testing.T) {
 	cmd := fetchDashboardData(client)
 	msg := cmd()
 
-	dd, ok := msg.(dashboardData)
+	dd, ok := msg.(DashboardDataMsg)
 	if !ok {
-		t.Fatalf("expected dashboardData msg, got %T", msg)
+		t.Fatalf("expected DashboardDataMsg, got %T", msg)
 	}
-	if dd.err == nil {
+	if dd.Err == nil {
 		t.Error("expected non-nil error from fetch with broken client")
 	}
 }
