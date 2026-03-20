@@ -8,7 +8,17 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/NimbleMarkets/ntcharts/sparkline"
+
 	"github.com/Ritpra93/forge/internal/proto/forgepb"
+)
+
+const (
+	sparklineWidth  = 40
+	sparklineHeight = 3
+	miniSparkWidth  = 10
+	miniSparkHeight = 1
+	workerUtilCap   = 60
 )
 
 const numPanels = 4
@@ -24,6 +34,8 @@ type OverviewModel struct {
 	refreshRate  time.Duration
 	focusedPanel int
 	ready        bool
+	throughput   *ThroughputTracker
+	workerUtil   map[string][]float64 // per-worker utilization history
 }
 
 // NewOverview creates a new OverviewModel with the given gRPC client and refresh rate.
@@ -31,6 +43,8 @@ func NewOverview(client forgepb.ForgeSchedulerClient, refreshRate time.Duration)
 	return OverviewModel{
 		client:      client,
 		refreshRate: refreshRate,
+		throughput:  NewThroughputTracker(defaultThroughputCap),
+		workerUtil:  make(map[string][]float64),
 	}
 }
 
@@ -59,6 +73,26 @@ func (m OverviewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case DashboardDataMsg:
 		m.data = msg.Data
 		m.err = msg.Err
+		if msg.Data != nil && msg.Data.GetTaskCounts() != nil {
+			m.throughput.Record(
+				int64(msg.Data.GetTaskCounts().GetCompleted()),
+				time.Now(),
+			)
+		}
+		if msg.Data != nil {
+			for _, w := range msg.Data.GetWorkers() {
+				id := w.GetWorkerId()
+				used := float64(6-w.GetAvailableSlots()) / 6.0
+				if used < 0 {
+					used = 0
+				}
+				hist := m.workerUtil[id]
+				if len(hist) >= workerUtilCap {
+					hist = hist[1:]
+				}
+				m.workerUtil[id] = append(hist, used)
+			}
+		}
 		return m, nil
 	}
 
@@ -85,7 +119,8 @@ func (m OverviewModel) View() string {
 	sections := []string{
 		renderClusterBar(m.data.GetCluster(), contentWidth, m.focusedPanel == 0),
 		renderTaskCounts(m.data.GetTaskCounts(), contentWidth, m.focusedPanel == 1),
-		renderWorkerTable(m.data.GetWorkers(), contentWidth, m.focusedPanel == 2),
+		renderThroughputSparkline(m.throughput, contentWidth),
+		renderWorkerTable(m.data.GetWorkers(), contentWidth, m.focusedPanel == 2, m.workerUtil),
 		renderEvents(m.data.GetRecentEvents(), contentWidth, m.height, m.focusedPanel == 3),
 	}
 
@@ -154,7 +189,30 @@ func renderTaskCounts(counts *forgepb.TaskCounts, width int, focused bool) strin
 	), width, focused)
 }
 
-func renderWorkerTable(workers []*forgepb.WorkerStatus, width int, focused bool) string {
+func renderThroughputSparkline(tracker *ThroughputTracker, width int) string {
+	label := dimStyle.Render("Throughput (tasks/sec)")
+
+	data := tracker.Throughput()
+	if len(data) == 0 {
+		return lipgloss.JoinVertical(lipgloss.Left,
+			label,
+			dimStyle.Render("  Collecting data..."),
+		)
+	}
+
+	sl := sparkline.New(sparklineWidth, sparklineHeight)
+	sl.AutoMaxValue = true
+	sl.PushAll(data)
+	sl.DrawBraille()
+
+	currentVal := data[len(data)-1]
+	valStr := dimStyle.Render(fmt.Sprintf(" %.1f t/s", currentVal))
+
+	chart := lipgloss.JoinHorizontal(lipgloss.Bottom, sl.View(), valStr)
+	return lipgloss.JoinVertical(lipgloss.Left, label, "  "+chart)
+}
+
+func renderWorkerTable(workers []*forgepb.WorkerStatus, width int, focused bool, workerUtil map[string][]float64) string {
 	header := sectionHeaderStyle.Render("WORKERS")
 
 	if len(workers) == 0 {
@@ -164,8 +222,8 @@ func renderWorkerTable(workers []*forgepb.WorkerStatus, width int, focused bool)
 		), width, focused)
 	}
 
-	tableHeader := fmt.Sprintf("  %-16s %-10s %-20s %s",
-		"WORKER ID", "STATUS", "UTILIZATION", "LAST HEARTBEAT")
+	tableHeader := fmt.Sprintf("  %-16s %-10s %-20s %-12s %s",
+		"WORKER ID", "STATUS", "UTILIZATION", "TREND", "LAST HEARTBEAT")
 	lines := []string{header, dimStyle.Render(tableHeader)}
 
 	for _, w := range workers {
@@ -175,6 +233,8 @@ func renderWorkerTable(workers []*forgepb.WorkerStatus, width int, focused bool)
 		}
 
 		utilBar := renderUtilizationBar(w.GetAvailableSlots(), 6)
+
+		miniSpark := renderMiniSparkline(workerUtil[w.GetWorkerId()])
 
 		hbAge := "unknown"
 		if w.GetLastHeartbeat() > 0 {
@@ -187,8 +247,8 @@ func renderWorkerTable(workers []*forgepb.WorkerStatus, width int, focused bool)
 			wID = wID[:16]
 		}
 
-		line := fmt.Sprintf("  %-16s %s  %s  %s",
-			wID, statusStr, utilBar, dimStyle.Render(hbAge))
+		line := fmt.Sprintf("  %-16s %s  %s  %s  %s",
+			wID, statusStr, utilBar, miniSpark, dimStyle.Render(hbAge))
 		lines = append(lines, line)
 	}
 
@@ -210,6 +270,16 @@ func renderUtilizationBar(availableSlots int32, totalSlots int32) string {
 	filled := strings.Repeat("█", int(used))
 	empty := strings.Repeat("░", int(totalSlots-used))
 	return fmt.Sprintf("[%s%s] %d/%d", filled, empty, used, totalSlots)
+}
+
+func renderMiniSparkline(history []float64) string {
+	if len(history) == 0 {
+		return strings.Repeat("·", miniSparkWidth)
+	}
+	sl := sparkline.New(miniSparkWidth, miniSparkHeight, sparkline.WithMaxValue(1.0))
+	sl.PushAll(history)
+	sl.DrawBraille()
+	return sl.View()
 }
 
 func renderEvents(events []*forgepb.ClusterEvent, width, height int, focused bool) string {
