@@ -517,6 +517,626 @@ func (x *TaskResultAck) GetAcknowledged() bool {
 	return false
 }
 
+type WatchTaskRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TaskId         string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	PollIntervalMs int32                  `protobuf:"varint,2,opt,name=poll_interval_ms,json=pollIntervalMs,proto3" json:"poll_interval_ms,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *WatchTaskRequest) Reset() {
+	*x = WatchTaskRequest{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchTaskRequest) ProtoMessage() {}
+
+func (x *WatchTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchTaskRequest.ProtoReflect.Descriptor instead.
+func (*WatchTaskRequest) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *WatchTaskRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+func (x *WatchTaskRequest) GetPollIntervalMs() int32 {
+	if x != nil {
+		return x.PollIntervalMs
+	}
+	return 0
+}
+
+type ClusterInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClusterInfoRequest) Reset() {
+	*x = ClusterInfoRequest{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClusterInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClusterInfoRequest) ProtoMessage() {}
+
+func (x *ClusterInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClusterInfoRequest.ProtoReflect.Descriptor instead.
+func (*ClusterInfoRequest) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{9}
+}
+
+type ClusterInfoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LeaderAddress string                 `protobuf:"bytes,1,opt,name=leader_address,json=leaderAddress,proto3" json:"leader_address,omitempty"`
+	LeaderId      string                 `protobuf:"bytes,2,opt,name=leader_id,json=leaderId,proto3" json:"leader_id,omitempty"`
+	Nodes         []*NodeInfo            `protobuf:"bytes,3,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClusterInfoResponse) Reset() {
+	*x = ClusterInfoResponse{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClusterInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClusterInfoResponse) ProtoMessage() {}
+
+func (x *ClusterInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClusterInfoResponse.ProtoReflect.Descriptor instead.
+func (*ClusterInfoResponse) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ClusterInfoResponse) GetLeaderAddress() string {
+	if x != nil {
+		return x.LeaderAddress
+	}
+	return ""
+}
+
+func (x *ClusterInfoResponse) GetLeaderId() string {
+	if x != nil {
+		return x.LeaderId
+	}
+	return ""
+}
+
+func (x *ClusterInfoResponse) GetNodes() []*NodeInfo {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
+type NodeInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Address       string                 `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	State         string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeInfo) Reset() {
+	*x = NodeInfo{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeInfo) ProtoMessage() {}
+
+func (x *NodeInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeInfo.ProtoReflect.Descriptor instead.
+func (*NodeInfo) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *NodeInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *NodeInfo) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *NodeInfo) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+type ListTasksRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StatusFilter  string                 `protobuf:"bytes,1,opt,name=status_filter,json=statusFilter,proto3" json:"status_filter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTasksRequest) Reset() {
+	*x = ListTasksRequest{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTasksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTasksRequest) ProtoMessage() {}
+
+func (x *ListTasksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTasksRequest.ProtoReflect.Descriptor instead.
+func (*ListTasksRequest) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListTasksRequest) GetStatusFilter() string {
+	if x != nil {
+		return x.StatusFilter
+	}
+	return ""
+}
+
+type ListTasksResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tasks         []*TaskStatusResponse  `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTasksResponse) Reset() {
+	*x = ListTasksResponse{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTasksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTasksResponse) ProtoMessage() {}
+
+func (x *ListTasksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTasksResponse.ProtoReflect.Descriptor instead.
+func (*ListTasksResponse) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListTasksResponse) GetTasks() []*TaskStatusResponse {
+	if x != nil {
+		return x.Tasks
+	}
+	return nil
+}
+
+type DashboardDataRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DashboardDataRequest) Reset() {
+	*x = DashboardDataRequest{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DashboardDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DashboardDataRequest) ProtoMessage() {}
+
+func (x *DashboardDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DashboardDataRequest.ProtoReflect.Descriptor instead.
+func (*DashboardDataRequest) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{14}
+}
+
+type DashboardDataResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Cluster       *ClusterInfoResponse   `protobuf:"bytes,1,opt,name=cluster,proto3" json:"cluster,omitempty"`
+	TaskCounts    *TaskCounts            `protobuf:"bytes,2,opt,name=task_counts,json=taskCounts,proto3" json:"task_counts,omitempty"`
+	Workers       []*WorkerStatus        `protobuf:"bytes,3,rep,name=workers,proto3" json:"workers,omitempty"`
+	RecentEvents  []*ClusterEvent        `protobuf:"bytes,4,rep,name=recent_events,json=recentEvents,proto3" json:"recent_events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DashboardDataResponse) Reset() {
+	*x = DashboardDataResponse{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DashboardDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DashboardDataResponse) ProtoMessage() {}
+
+func (x *DashboardDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DashboardDataResponse.ProtoReflect.Descriptor instead.
+func (*DashboardDataResponse) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *DashboardDataResponse) GetCluster() *ClusterInfoResponse {
+	if x != nil {
+		return x.Cluster
+	}
+	return nil
+}
+
+func (x *DashboardDataResponse) GetTaskCounts() *TaskCounts {
+	if x != nil {
+		return x.TaskCounts
+	}
+	return nil
+}
+
+func (x *DashboardDataResponse) GetWorkers() []*WorkerStatus {
+	if x != nil {
+		return x.Workers
+	}
+	return nil
+}
+
+func (x *DashboardDataResponse) GetRecentEvents() []*ClusterEvent {
+	if x != nil {
+		return x.RecentEvents
+	}
+	return nil
+}
+
+type TaskCounts struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Pending       int32                  `protobuf:"varint,1,opt,name=pending,proto3" json:"pending,omitempty"`
+	Running       int32                  `protobuf:"varint,2,opt,name=running,proto3" json:"running,omitempty"`
+	Completed     int32                  `protobuf:"varint,3,opt,name=completed,proto3" json:"completed,omitempty"`
+	Failed        int32                  `protobuf:"varint,4,opt,name=failed,proto3" json:"failed,omitempty"`
+	DeadLetter    int32                  `protobuf:"varint,5,opt,name=dead_letter,json=deadLetter,proto3" json:"dead_letter,omitempty"`
+	Retrying      int32                  `protobuf:"varint,6,opt,name=retrying,proto3" json:"retrying,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TaskCounts) Reset() {
+	*x = TaskCounts{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskCounts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskCounts) ProtoMessage() {}
+
+func (x *TaskCounts) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskCounts.ProtoReflect.Descriptor instead.
+func (*TaskCounts) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *TaskCounts) GetPending() int32 {
+	if x != nil {
+		return x.Pending
+	}
+	return 0
+}
+
+func (x *TaskCounts) GetRunning() int32 {
+	if x != nil {
+		return x.Running
+	}
+	return 0
+}
+
+func (x *TaskCounts) GetCompleted() int32 {
+	if x != nil {
+		return x.Completed
+	}
+	return 0
+}
+
+func (x *TaskCounts) GetFailed() int32 {
+	if x != nil {
+		return x.Failed
+	}
+	return 0
+}
+
+func (x *TaskCounts) GetDeadLetter() int32 {
+	if x != nil {
+		return x.DeadLetter
+	}
+	return 0
+}
+
+func (x *TaskCounts) GetRetrying() int32 {
+	if x != nil {
+		return x.Retrying
+	}
+	return 0
+}
+
+type WorkerStatus struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	WorkerId       string                 `protobuf:"bytes,1,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
+	Capabilities   []string               `protobuf:"bytes,2,rep,name=capabilities,proto3" json:"capabilities,omitempty"`
+	AvailableSlots int32                  `protobuf:"varint,3,opt,name=available_slots,json=availableSlots,proto3" json:"available_slots,omitempty"`
+	LastHeartbeat  int64                  `protobuf:"varint,4,opt,name=last_heartbeat,json=lastHeartbeat,proto3" json:"last_heartbeat,omitempty"`
+	Status         string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *WorkerStatus) Reset() {
+	*x = WorkerStatus{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkerStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkerStatus) ProtoMessage() {}
+
+func (x *WorkerStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkerStatus.ProtoReflect.Descriptor instead.
+func (*WorkerStatus) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *WorkerStatus) GetWorkerId() string {
+	if x != nil {
+		return x.WorkerId
+	}
+	return ""
+}
+
+func (x *WorkerStatus) GetCapabilities() []string {
+	if x != nil {
+		return x.Capabilities
+	}
+	return nil
+}
+
+func (x *WorkerStatus) GetAvailableSlots() int32 {
+	if x != nil {
+		return x.AvailableSlots
+	}
+	return 0
+}
+
+func (x *WorkerStatus) GetLastHeartbeat() int64 {
+	if x != nil {
+		return x.LastHeartbeat
+	}
+	return 0
+}
+
+func (x *WorkerStatus) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type ClusterEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Timestamp     int64                  `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClusterEvent) Reset() {
+	*x = ClusterEvent{}
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClusterEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClusterEvent) ProtoMessage() {}
+
+func (x *ClusterEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_forgepb_forge_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClusterEvent.ProtoReflect.Descriptor instead.
+func (*ClusterEvent) Descriptor() ([]byte, []int) {
+	return file_internal_proto_forgepb_forge_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ClusterEvent) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *ClusterEvent) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ClusterEvent) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_internal_proto_forgepb_forge_proto protoreflect.FileDescriptor
 
 const file_internal_proto_forgepb_forge_proto_rawDesc = "" +
@@ -560,13 +1180,59 @@ const file_internal_proto_forgepb_forge_proto_rawDesc = "" +
 	"\x06result\x18\x04 \x01(\fR\x06result\x12#\n" +
 	"\rerror_message\x18\x05 \x01(\tR\ferrorMessage\"3\n" +
 	"\rTaskResultAck\x12\"\n" +
-	"\facknowledged\x18\x01 \x01(\bR\facknowledged2\x8f\x02\n" +
+	"\facknowledged\x18\x01 \x01(\bR\facknowledged\"U\n" +
+	"\x10WatchTaskRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12(\n" +
+	"\x10poll_interval_ms\x18\x02 \x01(\x05R\x0epollIntervalMs\"\x14\n" +
+	"\x12ClusterInfoRequest\"\x80\x01\n" +
+	"\x13ClusterInfoResponse\x12%\n" +
+	"\x0eleader_address\x18\x01 \x01(\tR\rleaderAddress\x12\x1b\n" +
+	"\tleader_id\x18\x02 \x01(\tR\bleaderId\x12%\n" +
+	"\x05nodes\x18\x03 \x03(\v2\x0f.forge.NodeInfoR\x05nodes\"J\n" +
+	"\bNodeInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x14\n" +
+	"\x05state\x18\x03 \x01(\tR\x05state\"7\n" +
+	"\x10ListTasksRequest\x12#\n" +
+	"\rstatus_filter\x18\x01 \x01(\tR\fstatusFilter\"D\n" +
+	"\x11ListTasksResponse\x12/\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x19.forge.TaskStatusResponseR\x05tasks\"\x16\n" +
+	"\x14DashboardDataRequest\"\xea\x01\n" +
+	"\x15DashboardDataResponse\x124\n" +
+	"\acluster\x18\x01 \x01(\v2\x1a.forge.ClusterInfoResponseR\acluster\x122\n" +
+	"\vtask_counts\x18\x02 \x01(\v2\x11.forge.TaskCountsR\n" +
+	"taskCounts\x12-\n" +
+	"\aworkers\x18\x03 \x03(\v2\x13.forge.WorkerStatusR\aworkers\x128\n" +
+	"\rrecent_events\x18\x04 \x03(\v2\x13.forge.ClusterEventR\frecentEvents\"\xb3\x01\n" +
+	"\n" +
+	"TaskCounts\x12\x18\n" +
+	"\apending\x18\x01 \x01(\x05R\apending\x12\x18\n" +
+	"\arunning\x18\x02 \x01(\x05R\arunning\x12\x1c\n" +
+	"\tcompleted\x18\x03 \x01(\x05R\tcompleted\x12\x16\n" +
+	"\x06failed\x18\x04 \x01(\x05R\x06failed\x12\x1f\n" +
+	"\vdead_letter\x18\x05 \x01(\x05R\n" +
+	"deadLetter\x12\x1a\n" +
+	"\bretrying\x18\x06 \x01(\x05R\bretrying\"\xb7\x01\n" +
+	"\fWorkerStatus\x12\x1b\n" +
+	"\tworker_id\x18\x01 \x01(\tR\bworkerId\x12\"\n" +
+	"\fcapabilities\x18\x02 \x03(\tR\fcapabilities\x12'\n" +
+	"\x0favailable_slots\x18\x03 \x01(\x05R\x0eavailableSlots\x12%\n" +
+	"\x0elast_heartbeat\x18\x04 \x01(\x03R\rlastHeartbeat\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\"Z\n" +
+	"\fClusterEvent\x12\x1c\n" +
+	"\ttimestamp\x18\x01 \x01(\x03R\ttimestamp\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage2\xaa\x04\n" +
 	"\x0eForgeScheduler\x125\n" +
 	"\n" +
 	"SubmitTask\x12\x12.forge.TaskRequest\x1a\x13.forge.TaskResponse\x12D\n" +
 	"\rGetTaskStatus\x12\x18.forge.TaskStatusRequest\x1a\x19.forge.TaskStatusResponse\x12C\n" +
 	"\x0eRegisterWorker\x12\x16.forge.WorkerHeartbeat\x1a\x15.forge.TaskAssignment(\x010\x01\x12;\n" +
-	"\x10ReportTaskResult\x12\x11.forge.TaskResult\x1a\x14.forge.TaskResultAckB2Z0github.com/Ritpra93/forge/internal/proto/forgepbb\x06proto3"
+	"\x10ReportTaskResult\x12\x11.forge.TaskResult\x1a\x14.forge.TaskResultAck\x12A\n" +
+	"\tWatchTask\x12\x17.forge.WatchTaskRequest\x1a\x19.forge.TaskStatusResponse0\x01\x12G\n" +
+	"\x0eGetClusterInfo\x12\x19.forge.ClusterInfoRequest\x1a\x1a.forge.ClusterInfoResponse\x12>\n" +
+	"\tListTasks\x12\x17.forge.ListTasksRequest\x1a\x18.forge.ListTasksResponse\x12M\n" +
+	"\x10GetDashboardData\x12\x1b.forge.DashboardDataRequest\x1a\x1c.forge.DashboardDataResponseB2Z0github.com/Ritpra93/forge/internal/proto/forgepbb\x06proto3"
 
 var (
 	file_internal_proto_forgepb_forge_proto_rawDescOnce sync.Once
@@ -580,31 +1246,56 @@ func file_internal_proto_forgepb_forge_proto_rawDescGZIP() []byte {
 	return file_internal_proto_forgepb_forge_proto_rawDescData
 }
 
-var file_internal_proto_forgepb_forge_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_internal_proto_forgepb_forge_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_internal_proto_forgepb_forge_proto_goTypes = []any{
-	(*TaskRequest)(nil),        // 0: forge.TaskRequest
-	(*TaskResponse)(nil),       // 1: forge.TaskResponse
-	(*TaskStatusRequest)(nil),  // 2: forge.TaskStatusRequest
-	(*TaskStatusResponse)(nil), // 3: forge.TaskStatusResponse
-	(*WorkerHeartbeat)(nil),    // 4: forge.WorkerHeartbeat
-	(*TaskAssignment)(nil),     // 5: forge.TaskAssignment
-	(*TaskResult)(nil),         // 6: forge.TaskResult
-	(*TaskResultAck)(nil),      // 7: forge.TaskResultAck
+	(*TaskRequest)(nil),           // 0: forge.TaskRequest
+	(*TaskResponse)(nil),          // 1: forge.TaskResponse
+	(*TaskStatusRequest)(nil),     // 2: forge.TaskStatusRequest
+	(*TaskStatusResponse)(nil),    // 3: forge.TaskStatusResponse
+	(*WorkerHeartbeat)(nil),       // 4: forge.WorkerHeartbeat
+	(*TaskAssignment)(nil),        // 5: forge.TaskAssignment
+	(*TaskResult)(nil),            // 6: forge.TaskResult
+	(*TaskResultAck)(nil),         // 7: forge.TaskResultAck
+	(*WatchTaskRequest)(nil),      // 8: forge.WatchTaskRequest
+	(*ClusterInfoRequest)(nil),    // 9: forge.ClusterInfoRequest
+	(*ClusterInfoResponse)(nil),   // 10: forge.ClusterInfoResponse
+	(*NodeInfo)(nil),              // 11: forge.NodeInfo
+	(*ListTasksRequest)(nil),      // 12: forge.ListTasksRequest
+	(*ListTasksResponse)(nil),     // 13: forge.ListTasksResponse
+	(*DashboardDataRequest)(nil),  // 14: forge.DashboardDataRequest
+	(*DashboardDataResponse)(nil), // 15: forge.DashboardDataResponse
+	(*TaskCounts)(nil),            // 16: forge.TaskCounts
+	(*WorkerStatus)(nil),          // 17: forge.WorkerStatus
+	(*ClusterEvent)(nil),          // 18: forge.ClusterEvent
 }
 var file_internal_proto_forgepb_forge_proto_depIdxs = []int32{
-	0, // 0: forge.ForgeScheduler.SubmitTask:input_type -> forge.TaskRequest
-	2, // 1: forge.ForgeScheduler.GetTaskStatus:input_type -> forge.TaskStatusRequest
-	4, // 2: forge.ForgeScheduler.RegisterWorker:input_type -> forge.WorkerHeartbeat
-	6, // 3: forge.ForgeScheduler.ReportTaskResult:input_type -> forge.TaskResult
-	1, // 4: forge.ForgeScheduler.SubmitTask:output_type -> forge.TaskResponse
-	3, // 5: forge.ForgeScheduler.GetTaskStatus:output_type -> forge.TaskStatusResponse
-	5, // 6: forge.ForgeScheduler.RegisterWorker:output_type -> forge.TaskAssignment
-	7, // 7: forge.ForgeScheduler.ReportTaskResult:output_type -> forge.TaskResultAck
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	11, // 0: forge.ClusterInfoResponse.nodes:type_name -> forge.NodeInfo
+	3,  // 1: forge.ListTasksResponse.tasks:type_name -> forge.TaskStatusResponse
+	10, // 2: forge.DashboardDataResponse.cluster:type_name -> forge.ClusterInfoResponse
+	16, // 3: forge.DashboardDataResponse.task_counts:type_name -> forge.TaskCounts
+	17, // 4: forge.DashboardDataResponse.workers:type_name -> forge.WorkerStatus
+	18, // 5: forge.DashboardDataResponse.recent_events:type_name -> forge.ClusterEvent
+	0,  // 6: forge.ForgeScheduler.SubmitTask:input_type -> forge.TaskRequest
+	2,  // 7: forge.ForgeScheduler.GetTaskStatus:input_type -> forge.TaskStatusRequest
+	4,  // 8: forge.ForgeScheduler.RegisterWorker:input_type -> forge.WorkerHeartbeat
+	6,  // 9: forge.ForgeScheduler.ReportTaskResult:input_type -> forge.TaskResult
+	8,  // 10: forge.ForgeScheduler.WatchTask:input_type -> forge.WatchTaskRequest
+	9,  // 11: forge.ForgeScheduler.GetClusterInfo:input_type -> forge.ClusterInfoRequest
+	12, // 12: forge.ForgeScheduler.ListTasks:input_type -> forge.ListTasksRequest
+	14, // 13: forge.ForgeScheduler.GetDashboardData:input_type -> forge.DashboardDataRequest
+	1,  // 14: forge.ForgeScheduler.SubmitTask:output_type -> forge.TaskResponse
+	3,  // 15: forge.ForgeScheduler.GetTaskStatus:output_type -> forge.TaskStatusResponse
+	5,  // 16: forge.ForgeScheduler.RegisterWorker:output_type -> forge.TaskAssignment
+	7,  // 17: forge.ForgeScheduler.ReportTaskResult:output_type -> forge.TaskResultAck
+	3,  // 18: forge.ForgeScheduler.WatchTask:output_type -> forge.TaskStatusResponse
+	10, // 19: forge.ForgeScheduler.GetClusterInfo:output_type -> forge.ClusterInfoResponse
+	13, // 20: forge.ForgeScheduler.ListTasks:output_type -> forge.ListTasksResponse
+	15, // 21: forge.ForgeScheduler.GetDashboardData:output_type -> forge.DashboardDataResponse
+	14, // [14:22] is the sub-list for method output_type
+	6,  // [6:14] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_forgepb_forge_proto_init() }
@@ -618,7 +1309,7 @@ func file_internal_proto_forgepb_forge_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_proto_forgepb_forge_proto_rawDesc), len(file_internal_proto_forgepb_forge_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

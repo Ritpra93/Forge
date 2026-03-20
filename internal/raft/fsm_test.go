@@ -142,13 +142,13 @@ func TestApplyFailTask(t *testing.T) {
 			name:           "first failure with retries remaining",
 			maxRetries:     3,
 			failCount:      1,
-			expectedStatus: "pending",
+			expectedStatus: "retrying",
 		},
 		{
 			name:           "second failure with retries remaining",
 			maxRetries:     3,
 			failCount:      2,
-			expectedStatus: "pending",
+			expectedStatus: "retrying",
 		},
 		{
 			name:           "max retries exceeded",
@@ -349,6 +349,62 @@ func TestGetAllTasks(t *testing.T) {
 	}
 	if tasks["task-1"] == nil || tasks["task-2"] == nil {
 		t.Error("expected both tasks to be present")
+	}
+}
+
+func TestGetTasksByStatus(t *testing.T) {
+	fsm := NewTaskFSM()
+	createTestTask(t, fsm, "task-1", "fibonacci", 3)
+	createTestTask(t, fsm, "task-2", "sleep", 3)
+	createTestTask(t, fsm, "task-3", "fibonacci", 3)
+
+	// Assign task-1 to make it "running".
+	payload, _ := json.Marshal(AssignTaskPayload{WorkerID: "worker-1"})
+	mustApplyCommand(t, fsm, Command{
+		Type:    "assign_task",
+		TaskID:  "task-1",
+		Payload: payload,
+	})
+
+	pending := fsm.GetTasksByStatus("pending")
+	if len(pending) != 2 {
+		t.Errorf("got %d pending tasks, want 2", len(pending))
+	}
+
+	running := fsm.GetTasksByStatus("running")
+	if len(running) != 1 {
+		t.Errorf("got %d running tasks, want 1", len(running))
+	}
+
+	completed := fsm.GetTasksByStatus("completed")
+	if len(completed) != 0 {
+		t.Errorf("got %d completed tasks, want 0", len(completed))
+	}
+}
+
+func TestGetTasksByStatusAndWorker(t *testing.T) {
+	fsm := NewTaskFSM()
+	createTestTask(t, fsm, "task-1", "fibonacci", 3)
+	createTestTask(t, fsm, "task-2", "sleep", 3)
+
+	// Assign both to different workers.
+	p1, _ := json.Marshal(AssignTaskPayload{WorkerID: "worker-1"})
+	mustApplyCommand(t, fsm, Command{Type: "assign_task", TaskID: "task-1", Payload: p1})
+
+	p2, _ := json.Marshal(AssignTaskPayload{WorkerID: "worker-2"})
+	mustApplyCommand(t, fsm, Command{Type: "assign_task", TaskID: "task-2", Payload: p2})
+
+	w1Tasks := fsm.GetTasksByStatusAndWorker("running", "worker-1")
+	if len(w1Tasks) != 1 {
+		t.Errorf("got %d tasks for worker-1, want 1", len(w1Tasks))
+	}
+	if len(w1Tasks) > 0 && w1Tasks[0].ID != "task-1" {
+		t.Errorf("got task %q, want task-1", w1Tasks[0].ID)
+	}
+
+	w3Tasks := fsm.GetTasksByStatusAndWorker("running", "worker-3")
+	if len(w3Tasks) != 0 {
+		t.Errorf("got %d tasks for worker-3, want 0", len(w3Tasks))
 	}
 }
 

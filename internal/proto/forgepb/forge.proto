@@ -9,6 +9,10 @@ service ForgeScheduler {
   rpc GetTaskStatus(TaskStatusRequest) returns (TaskStatusResponse);
   rpc RegisterWorker(stream WorkerHeartbeat) returns (stream TaskAssignment);
   rpc ReportTaskResult(TaskResult) returns (TaskResultAck);
+  rpc WatchTask(WatchTaskRequest) returns (stream TaskStatusResponse);
+  rpc GetClusterInfo(ClusterInfoRequest) returns (ClusterInfoResponse);
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+  rpc GetDashboardData(DashboardDataRequest) returns (DashboardDataResponse);
 }
 
 message TaskRequest {
@@ -59,4 +63,63 @@ message TaskResult {
 
 message TaskResultAck {
   bool acknowledged = 1;
+}
+
+message WatchTaskRequest {
+  string task_id = 1;
+  int32 poll_interval_ms = 2;
+}
+
+message ClusterInfoRequest {}
+
+message ClusterInfoResponse {
+  string leader_address = 1;
+  string leader_id = 2;
+  repeated NodeInfo nodes = 3;
+}
+
+message NodeInfo {
+  string id = 1;
+  string address = 2;
+  string state = 3;
+}
+
+message ListTasksRequest {
+  string status_filter = 1;
+}
+
+message ListTasksResponse {
+  repeated TaskStatusResponse tasks = 1;
+}
+
+message DashboardDataRequest {}
+
+message DashboardDataResponse {
+  ClusterInfoResponse cluster = 1;
+  TaskCounts task_counts = 2;
+  repeated WorkerStatus workers = 3;
+  repeated ClusterEvent recent_events = 4;
+}
+
+message TaskCounts {
+  int32 pending = 1;
+  int32 running = 2;
+  int32 completed = 3;
+  int32 failed = 4;
+  int32 dead_letter = 5;
+  int32 retrying = 6;
+}
+
+message WorkerStatus {
+  string worker_id = 1;
+  repeated string capabilities = 2;
+  int32 available_slots = 3;
+  int64 last_heartbeat = 4;
+  string status = 5;
+}
+
+message ClusterEvent {
+  int64 timestamp = 1;
+  string type = 2;
+  string message = 3;
 }

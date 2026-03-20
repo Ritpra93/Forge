@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'forge-scheduler'
+    static_configs:
+      - targets:
+          - 'scheduler-1:9090'
+          - 'scheduler-2:9090'
+          - 'scheduler-3:9090'
+
+  - job_name: 'forge-worker'
+    static_configs:
+      - targets:
+          - 'worker-1:9091'
+          - 'worker-2:9091'

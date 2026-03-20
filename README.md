@@ -2,28 +2,23 @@
 
 A fault-tolerant distributed task orchestrator built in Go with Raft consensus, gRPC communication, and real-time observability.
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Forge Cluster                             │
-│                                                                  │
-│  ┌─────────────┐   Raft    ┌─────────────┐   Raft    ┌────────────────┐
-│  │ Scheduler 1 │◄────────►│ Scheduler 2 │◄────────►│ Scheduler 3    │
-│  │  (Leader)    │           │ (Follower)  │           │  (Follower)    │
-│  └──────┬──────┘           └─────────────┘           └────────────────┘
-│         │                                                        │
-│         │ gRPC (task assignment + heartbeats)                     │
-│         │                                                        │
-│  ┌──────┴──────┬───────────────┬───────────────┐                 │
-│  │             │               │               │                 │
-│  ▼             ▼               ▼               ▼                 │
-│ ┌──────┐   ┌──────┐       ┌──────┐       ┌──────┐               │
-│ │Wrkr 1│   │Wrkr 2│       │Wrkr 3│       │Wrkr N│               │
-│ └──────┘   └──────┘       └──────┘       └──────┘               │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐     │
-│  │              Prometheus  →  Grafana Dashboards           │     │
-│  └─────────────────────────────────────────────────────────┘     │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    Client["forgectl (CLI)"] -->|gRPC| S1
+
+    subgraph Scheduler Cluster
+        S1["Scheduler 1<br/>(Leader)"] <-->|Raft| S2["Scheduler 2<br/>(Follower)"]
+        S2 <-->|Raft| S3["Scheduler 3<br/>(Follower)"]
+        S1 <-->|Raft| S3
+    end
+
+    S1 -->|"gRPC Stream<br/>(tasks + heartbeats)"| W1[Worker 1]
+    S1 -->|gRPC Stream| W2[Worker 2]
+    S1 -->|gRPC Stream| WN[Worker N]
+
+    S1 & S2 & S3 -->|/metrics| Prometheus
+    W1 & W2 & WN -->|/metrics| Prometheus
+    Prometheus --> Grafana
 ```
 
 ## Why Forge?
@@ -39,6 +34,8 @@ Existing task orchestration solutions like Temporal and Celery are heavyweight f
 **gRPC with bidirectional streaming** — Type-safe communication between all components. Workers maintain persistent streaming connections for real-time heartbeats and task assignment — no polling.
 
 **Real-time observability** — Grafana dashboards showing task throughput, worker health, Raft elections, and failure recovery. Watch the system heal itself in real time during chaos testing.
+
+**Live terminal dashboard** — A full-screen TUI built with Bubbletea that shows cluster status, task counters, worker health, and recent events in real time. No browser required — just run `forgectl dashboard`.
 
 ## Quick Start
 
@@ -62,6 +59,9 @@ open http://localhost:3000        # admin / admin
 
 # Check cluster health
 ./forgectl cluster
+
+# Launch live terminal dashboard
+./forgectl dashboard
 
 # Kill the leader and watch automatic failover
 docker kill forge-scheduler-1
@@ -99,9 +99,9 @@ Client                  Scheduler (Leader)              Worker
 ```
 Normal operation:          Leader dies:              Worker dies:
 
-  S1(L) ←→ S2 ←→ S3        S1(💀)    S2 ←→ S3       S1(L) ←→ S2 ←→ S3
+  S1(L) ←→ S2 ←→ S3        S1(dies)    S2 ←→ S3       S1(L) ←→ S2 ←→ S3
    │                                   │                │
-   ├── W1  W2  W3           S2 elected leader          W1  W2(💀) W3
+   ├── W1  W2  W3           S2 elected leader          W1  W2(dies) W3
    │                         │                          │
    │                         ├── W1  W2  W3            Detects missed heartbeats
    │                         │                          │
@@ -130,6 +130,7 @@ Normal operation:          Leader dies:              Worker dies:
 | Metrics | Prometheus client_golang | Industry standard, 67%+ production adoption |
 | Dashboards | Grafana | Industry standard visualization, pairs with Prometheus |
 | CLI | cobra | Standard Go CLI library (kubectl, docker, hugo) |
+| Terminal UI | bubbletea + lipgloss | Elm-architecture TUI framework with styled rendering |
 | Deployment | Docker Compose | One-command local cluster, no cloud dependencies |
 | CI | GitHub Actions | Automated testing with race detection and linting |
 
@@ -160,6 +161,7 @@ forge/
 │   ├── raft/               # Raft FSM and node setup
 │   ├── scheduler/          # gRPC server, task assignment, worker tracking
 │   ├── worker/             # Task execution, heartbeat, handlers
+│   ├── dashboard/          # Live terminal dashboard (Bubbletea TUI)
 │   ├── proto/forgepb/      # Protobuf schema and generated code
 │   └── metrics/            # Prometheus metric definitions
 ├── test/
@@ -263,9 +265,29 @@ Access Grafana at `http://localhost:3000` (admin/admin) after running `make up`.
 
 **Chaos Demo** — Combined single-screen view of leader status, task throughput, and worker count — designed for live demonstrations of failure recovery.
 
+### Live Terminal Dashboard
+
+For a quick overview without opening a browser, use the built-in terminal dashboard:
+
+```bash
+# Launch with default settings (refresh every 2s)
+./forgectl dashboard
+
+# Custom refresh rate and scheduler address
+./forgectl dashboard --address scheduler-1:50051 --refresh 1000
+```
+
+The dashboard shows four sections:
+- **Cluster Status** — Leader indicator, node list with colored health dots
+- **Task Counts** — Color-coded counters for each task state (pending, running, completed, failed, retrying, dead letter)
+- **Worker Table** — Worker ID, health status, slot utilization bar, last heartbeat time
+- **Recent Events** — Timestamped log of task submissions, completions, failures, worker connections, and leader elections
+
+Keyboard controls: `q` quit, `r` force refresh, `tab` cycle focus between sections.
+
 ### Prometheus Metrics
 
-All metrics are exposed at `/metrics` on each scheduler and worker node and use the `forge_` prefix. See [CLAUDE.md](CLAUDE.md) for the complete metrics inventory.
+All metrics are exposed at `/metrics` on each scheduler and worker node and use the `forge_` prefix.
 
 ## Contributing
 
