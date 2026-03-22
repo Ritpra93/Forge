@@ -14,6 +14,12 @@ type DashboardDataMsg struct {
 	Err  error
 }
 
+// ListTasksMsg is the message returned by the ListTasks gRPC fetch command.
+type ListTasksMsg struct {
+	Tasks []*forgepb.TaskStatusResponse
+	Err   error
+}
+
 // TickMsg signals that the auto-refresh interval has elapsed.
 type TickMsg time.Time
 

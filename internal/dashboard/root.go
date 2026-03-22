@@ -32,7 +32,7 @@ func New(client forgepb.ForgeSchedulerClient, refreshRate time.Duration) RootMod
 		refreshRate: refreshRate,
 		tabs: []Tab{
 			NewOverview(client, refreshRate),
-			placeholderTab{name: "Tasks"},
+			NewTasks(client, refreshRate),
 			placeholderTab{name: "Workers"},
 			placeholderTab{name: "Cluster"},
 			placeholderTab{name: "Chaos"},
@@ -48,7 +48,7 @@ func (m RootModel) Init() tea.Cmd {
 			cmds = append(cmds, cmd)
 		}
 	}
-	cmds = append(cmds, fetchDashboardData(m.client), tickCmd(m.refreshRate))
+	cmds = append(cmds, fetchDashboardData(m.client), fetchListTasks(m.client), tickCmd(m.refreshRate))
 	return tea.Batch(cmds...)
 }
 
@@ -90,9 +90,13 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case DashboardDataMsg:
 		return m, m.propagateToAll(msg)
 
+	case ListTasksMsg:
+		return m, m.propagateToAll(msg)
+
 	case TickMsg:
 		return m, tea.Batch(
 			fetchDashboardData(m.client),
+			fetchListTasks(m.client),
 			tickCmd(m.refreshRate),
 		)
 	}
