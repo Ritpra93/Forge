@@ -35,7 +35,7 @@ func New(client forgepb.ForgeSchedulerClient, refreshRate time.Duration) RootMod
 			NewTasks(client, refreshRate),
 			placeholderTab{name: "Workers"},
 			placeholderTab{name: "Cluster"},
-			placeholderTab{name: "Chaos"},
+			NewChaos(),
 		},
 	}
 }
