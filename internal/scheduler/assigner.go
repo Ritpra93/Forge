@@ -46,6 +46,14 @@ func (s *ForgeSchedulerServer) assignPendingTasks() {
 		return
 	}
 
+	// Load pending tasks into the priority queue so higher-priority work is
+	// dispatched first; within the same priority tier tasks are served FIFO
+	// by creation timestamp.
+	pq := NewPriorityQueue()
+	for _, t := range pending {
+		pq.Push(t)
+	}
+
 	// Build a mutable slots tracker to avoid over-assigning in one tick.
 	type workerSlot struct {
 		info  workerInfo
@@ -59,7 +67,7 @@ func (s *ForgeSchedulerServer) assignPendingTasks() {
 	}
 
 	wi := 0 // round-robin index
-	for _, task := range pending {
+	for task := pq.Pop(); task != nil; task = pq.Pop() {
 		if len(available) == 0 {
 			break
 		}
