@@ -29,7 +29,7 @@ func newSubmitCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 
 			for i := 0; i < count; i++ {
 				resp, err := submitWithRedirect(client, &forgepb.TaskRequest{
@@ -84,7 +84,7 @@ func submitWithRedirect(client forgepb.ForgeSchedulerClient, req *forgepb.TaskRe
 	if connErr != nil {
 		return nil, fmt.Errorf("connecting to leader %s: %w", leaderAddr, connErr)
 	}
-	defer leaderConn.Close()
+	defer func() { _ = leaderConn.Close() }()
 
 	return leaderClient.SubmitTask(ctx, req)
 }

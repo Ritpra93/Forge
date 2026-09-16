@@ -22,7 +22,7 @@ func newWatchCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 
 			stream, err := client.WatchTask(context.Background(), &forgepb.WatchTaskRequest{
 				TaskId:         args[0],

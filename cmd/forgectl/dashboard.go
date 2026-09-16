@@ -29,7 +29,7 @@ func newDashboardCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 
 			model := dashboard.New(client, refresh)
 			p := tea.NewProgram(model, tea.WithAltScreen())

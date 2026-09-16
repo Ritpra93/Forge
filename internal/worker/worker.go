@@ -88,7 +88,7 @@ func (w *Worker) Run(ctx context.Context) error {
 		return fmt.Errorf("connecting to scheduler: %w", err)
 	}
 	w.conn = conn
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	return w.runStream(ctx)
 }
@@ -105,7 +105,7 @@ func (w *Worker) RunWithConn(ctx context.Context) error {
 		return fmt.Errorf("connecting to scheduler: %w", err)
 	}
 	w.conn = conn
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	return w.runStream(ctx)
 }

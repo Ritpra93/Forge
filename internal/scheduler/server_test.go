@@ -29,7 +29,7 @@ func setupTestServer(t *testing.T) (forgepb.ForgeSchedulerClient, *ForgeSchedule
 	r, fsm := setupLeaderRaft(t)
 
 	lis := bufconn.Listen(bufSize)
-	t.Cleanup(func() { lis.Close() })
+	t.Cleanup(func() { _ = lis.Close() })
 
 	logger := slog.Default()
 	srv := NewForgeSchedulerServer(r, fsm, logger)
@@ -71,7 +71,7 @@ func setupFollowerServer(t *testing.T) forgepb.ForgeSchedulerClient {
 	t.Cleanup(func() { r.Shutdown() })
 
 	lis := bufconn.Listen(bufSize)
-	t.Cleanup(func() { lis.Close() })
+	t.Cleanup(func() { _ = lis.Close() })
 
 	srv := NewForgeSchedulerServer(r, fsm, slog.Default())
 
@@ -143,7 +143,7 @@ func dialBufconn(t *testing.T, lis *bufconn.Listener) forgepb.ForgeSchedulerClie
 	if err != nil {
 		t.Fatalf("creating grpc client: %v", err)
 	}
-	t.Cleanup(func() { conn.Close() })
+	t.Cleanup(func() { _ = conn.Close() })
 
 	return forgepb.NewForgeSchedulerClient(conn)
 }

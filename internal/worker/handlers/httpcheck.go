@@ -43,7 +43,7 @@ func (h *HTTPCheckHandler) Execute(ctx context.Context, payload []byte) ([]byte,
 	if err != nil {
 		return nil, fmt.Errorf("executing request: %w", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	return json.Marshal(httpCheckResult{
 		URL:        p.URL,

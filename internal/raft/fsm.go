@@ -30,6 +30,9 @@ type Task struct {
 	TimeoutSeconds int    `json:"timeout_seconds"`
 	CreatedAt      int64  `json:"created_at"`
 	UpdatedAt      int64  `json:"updated_at"`
+	// Priority controls scheduling order: 3=CRITICAL, 2=HIGH, 1=NORMAL, 0=LOW.
+	// Higher values are dispatched before lower values.
+	Priority int `json:"priority"`
 }
 
 // AssignTaskPayload is the payload for assign_task commands.
@@ -165,7 +168,7 @@ func (f *TaskFSM) Snapshot() (hcraft.FSMSnapshot, error) {
 
 // Restore replaces all FSM state from a snapshot.
 func (f *TaskFSM) Restore(reader io.ReadCloser) error {
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	var tasks map[string]*Task
 	if err := json.NewDecoder(reader).Decode(&tasks); err != nil {

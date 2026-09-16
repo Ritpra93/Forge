@@ -4,6 +4,15 @@ package forge;
 
 option go_package = "github.com/Ritpra93/forge/internal/proto/forgepb";
 
+// Priority controls the scheduling order of tasks.
+// Higher values are dispatched before lower values.
+enum Priority {
+  PRIORITY_LOW      = 0;
+  PRIORITY_NORMAL   = 1;
+  PRIORITY_HIGH     = 2;
+  PRIORITY_CRITICAL = 3;
+}
+
 service ForgeScheduler {
   rpc SubmitTask(TaskRequest) returns (TaskResponse);
   rpc GetTaskStatus(TaskStatusRequest) returns (TaskStatusResponse);
@@ -20,6 +29,7 @@ message TaskRequest {
   bytes payload = 2;
   int32 max_retries = 3;
   int32 timeout_seconds = 4;
+  Priority priority = 5;
 }
 
 message TaskResponse {
@@ -38,6 +48,7 @@ message TaskStatusResponse {
   string assigned_worker = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+  int32 priority = 7;
 }
 
 message WorkerHeartbeat {
