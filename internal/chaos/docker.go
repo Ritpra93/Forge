@@ -19,9 +19,10 @@ type ChaosController struct {
 }
 
 // New creates a ChaosController using the standard environment-based Docker
-// client (DOCKER_HOST, DOCKER_TLS_VERIFY, etc.).
+// client (DOCKER_HOST, DOCKER_TLS_VERIFY, etc.), negotiating the API version
+// down to whatever the daemon supports.
 func New() (*ChaosController, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("creating docker client: %w", err)
 	}
